@@ -11,7 +11,6 @@ source "${REPO_DIR}/assets.sh"
 ROOT_UID=0
 DEST_DIR=
 
-scheme=
 window=
 
 # Destination directory
@@ -31,7 +30,6 @@ SASSC_OPT="-M -t expanded"
 
 THEME_NAME=Colloid
 THEME_VARIANTS=('' '-Purple' '-Pink' '-Red' '-Orange' '-Yellow' '-Green' '-Teal' '-Grey')
-SCHEME_VARIANTS=('' '-Nord' '-Dracula' '-Gruvbox' '-Everforest' '-Catppuccin')
 COLOR_VARIANTS=('' '-Light' '-Dark')
 SIZE_VARIANTS=('' '-Compact')
 
@@ -82,11 +80,10 @@ OPTIONS:
                           2. fixed                       Using fixed theme colors (that will break light/dark mode switch)
 
   --tweaks                Specify versions for tweaks
-                          1. [nord|dracula|gruvbox|everforest|catppuccin|all]  (Nord/Dracula/Gruvbox/Everforest/Catppuccin/all) ColorSchemes version
-                          2. black                       Blackness color version
-                          3. rimless                     Remove the 1px border about windows and menus
-                          4. normal                      Normal windows button style like gnome default theme (titlebuttons: max/min/close)
-                          5. float                       Floating gnome-shell panel style
+                          1. black                       Blackness color version
+                          2. rimless                     Remove the 1px border about windows and menus
+                          3. normal                      Normal windows button style like gnome default theme (titlebuttons: max/min/close)
+                          4. float                       Floating gnome-shell panel style
 
   -r, --remove,
   -u, --uninstall         Uninstall/Remove installed themes or links
@@ -101,13 +98,12 @@ install() {
   local theme="${3}"
   local color="${4}"
   local size="${5}"
-  local scheme="${6}"
-  local window="${7}"
+  local window="${6}"
 
   [[ "${color}" == '-Light' ]] && local ELSE_LIGHT="${color}"
   [[ "${color}" == '-Dark' ]] && local ELSE_DARK="${color}"
 
-  local THEME_DIR="${1}/${2}${3}${4}${5}${6}"
+  local THEME_DIR="${1}/${2}${3}${4}${5}"
 
   [[ -d "${THEME_DIR}" ]] && rm -rf "${THEME_DIR}"{'','-hdpi','-xhdpi'}
 
@@ -135,7 +131,6 @@ install() {
   sassc $SASSC_OPT "${SRC_DIR}/main/gnome-shell/gnome-shell${color}.scss"                    "${THEME_DIR}/gnome-shell/gnome-shell.css"
 
   mkdir -p                                                                                   "${THEME_DIR}/gtk-2.0"
-  # cp -r "${SRC_DIR}/main/gtk-2.0/gtkrc${theme}${ELSE_DARK:-}${scheme}"                       "${THEME_DIR}/gtk-2.0/gtkrc"
   cp -r "${SRC_DIR}/main/gtk-2.0/common/"*'.rc'                                              "${THEME_DIR}/gtk-2.0"
 
   mkdir -p                                                                                   "${THEME_DIR}/gtk-3.0"
@@ -163,14 +158,14 @@ install() {
   sed -i "s/button_offset=6/button_offset=12/"                                               "${THEME_DIR}-xhdpi/xfwm4/themerc"
 
   mkdir -p                                                                                   "${THEME_DIR}/labwc"
-  cp "${SRC_DIR}/main/labwc/themerc${color}${scheme}"                                        "${THEME_DIR}/labwc/themerc"
+  cp "${SRC_DIR}/main/labwc/themerc${color}"                                                 "${THEME_DIR}/labwc/themerc"
   cp -r "${SRC_DIR}/assets/labwc/assets${color}/"*.svg                                       "${THEME_DIR}/labwc/"
 
   mkdir -p                                                                                   "${THEME_DIR}/plank"
   if [[ "$color" == '-Light' ]]; then
-    cp -r "${SRC_DIR}/main/plank/theme-Light${scheme}/"*                                     "${THEME_DIR}/plank"
+    cp -r "${SRC_DIR}/main/plank/theme-Light/"*                                              "${THEME_DIR}/plank"
   else
-    cp -r "${SRC_DIR}/main/plank/theme-Dark${scheme}/"*                                      "${THEME_DIR}/plank"
+    cp -r "${SRC_DIR}/main/plank/theme-Dark/"*                                               "${THEME_DIR}/plank"
   fi
 }
 
@@ -178,7 +173,6 @@ themes=()
 colors=()
 sizes=()
 lcolors=()
-schemes=()
 
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -337,41 +331,6 @@ while [[ $# -gt 0 ]]; do
       shift
       for variant in $@; do
         case "$variant" in
-          nord)
-            colorscheme='true'
-            schemes+=("${SCHEME_VARIANTS[1]}")
-            echo -e "\nNord ColorScheme version! ..."
-            shift
-            ;;
-          dracula)
-            colorscheme='true'
-            schemes+=("${SCHEME_VARIANTS[2]}")
-            echo -e "\nDracula ColorScheme version! ..."
-            shift
-            ;;
-          gruvbox)
-            colorscheme='true'
-            schemes+=("${SCHEME_VARIANTS[3]}")
-            echo -e "\nGruvbox ColorScheme version! ..."
-            shift
-            ;;
-          everforest)
-            colorscheme='true'
-            schemes+=("${SCHEME_VARIANTS[4]}")
-            echo -e "\nEverforest ColorScheme version! ..."
-            shift
-            ;;
-          catppuccin)
-            colorscheme='true'
-            schemes+=("${SCHEME_VARIANTS[5]}")
-            echo -e "\nCatppuccin ColorScheme version! ..."
-            shift
-            ;;
-          all)
-            colorscheme='true'
-            schemes+=("${SCHEME_VARIANTS[@]}")
-            shift
-            ;;
           black)
             blackness="true"
             echo -e "\nBlackness version! ..."
@@ -432,10 +391,6 @@ if [[ "${#sizes[@]}" -eq 0 ]]; then
   sizes=("${SIZE_VARIANTS[0]}")
 fi
 
-if [[ "${#schemes[@]}" -eq 0 ]]; then
-  schemes=("${SCHEME_VARIANTS[0]}")
-fi
-
 #  Check command avalibility
 function has_command() {
   command -v $1 > /dev/null
@@ -469,30 +424,6 @@ tweaks_temp() {
 
 compact_size() {
   sed -i "/\$compact:/s/false/true/" "${SRC_DIR}/sass/_tweaks-temp.scss"
-}
-
-color_schemes() {
-  if [[ "$scheme" != '' ]]; then
-    case "$scheme" in
-      -Nord)
-        scheme_color='nord'
-        ;;
-      -Dracula)
-        scheme_color='dracula'
-        ;;
-      -Gruvbox)
-        scheme_color='gruvbox'
-        ;;
-      -Everforest)
-        scheme_color='everforest'
-        ;;
-      -Catppuccin)
-        scheme_color='catppuccin'
-        ;;
-    esac
-    sed -i "/\@import/s/color-palette-default/color-palette-${scheme_color}/" "${SRC_DIR}/sass/_tweaks-temp.scss"
-    sed -i "/\$colorscheme:/s/default/${scheme_color}/" "${SRC_DIR}/sass/_tweaks-temp.scss"
-  fi
 }
 
 color_type() {
@@ -564,7 +495,7 @@ theme_color() {
 }
 
 theme_tweaks() {
-  if [[ "$accent" = "true" || "$colorscheme" = "true" ]]; then
+  if [[ "$accent" = "true" ]]; then
     tweaks_temp
   fi
 
@@ -578,10 +509,6 @@ theme_tweaks() {
 
   if [[ "$colortype" = "fixed" ]] ; then
     color_type
-  fi
-
-  if [[ "$colorscheme" = "true" ]] ; then
-    color_schemes
   fi
 
   if [[ "$blackness" = "true" ]]; then
@@ -611,9 +538,8 @@ link_libadwaita() {
   local theme="${3}"
   local color="${4}"
   local size="${5}"
-  local scheme="${6}"
 
-  local THEME_DIR="${1}/${2}${3}${4}${5}${6}"
+  local THEME_DIR="${1}/${2}${3}${4}${5}"
 
   rm -rf "${HOME}/.config/gtk-4.0/"{assets,gtk.css,gtk-dark.css}
 
@@ -631,19 +557,18 @@ libadwaita_theme() {
   local theme="${3}"
   local color="${4}"
   local size="${5}"
-  local scheme="${6}"
 
   theme_tweaks
 
   rm -rf "${HOME}/.config/gtk-4.0/"{assets,gtk.css,gtk-dark.css}
 
-  echo -e "\nInstalling ${2}${3}${4}${5}${6} theme into '${HOME}/.config/gtk-4.0' for libadwaita..."
+  echo -e "\nInstalling ${2}${3}${4}${5} theme into '${HOME}/.config/gtk-4.0' for libadwaita..."
 
   mkdir -p                                                                      "${HOME}/.config/gtk-4.0"
   cp -r "${SRC_DIR}/assets/gtk/assets"                                          "${HOME}/.config/gtk-4.0"
   cp -r "${SRC_DIR}/assets/gtk/symbolics/"*'.svg'                               "${HOME}/.config/gtk-4.0/assets"
 
-  if [[ "$colorscheme" = "true" || "$blackness" = "true" || "$colortype" = "fixed" ]] ; then
+  if [[ "$blackness" = "true" || "$colortype" = "fixed" ]] ; then
     sassc $SASSC_OPT "${SRC_DIR}/main/libadwaita/libadwaita${color}.scss"       "${HOME}/.config/gtk-4.0/gtk.css"
   else
     sassc $SASSC_OPT "${SRC_DIR}/main/libadwaita/libadwaita-Light.scss"         "${HOME}/.config/gtk-4.0/gtk.css"
@@ -654,9 +579,7 @@ link_theme() {
   for theme in "${themes[@]}"; do
     for color in "${lcolors[@]}"; do
       for size in "${sizes[@]}"; do
-        for scheme in "${schemes[@]}"; do
-          link_libadwaita "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$scheme"
-        done
+        link_libadwaita "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size"
       done
     done
   done
@@ -666,9 +589,7 @@ install_libadwaita() {
   for theme in "${themes[@]}"; do
     for color in "${lcolors[@]}"; do
       for size in "${sizes[@]}"; do
-        for scheme in "${schemes[@]}"; do
-          libadwaita_theme "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$scheme"
-        done
+        libadwaita_theme "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size"
       done
     done
   done
@@ -678,11 +599,9 @@ install_theme() {
   for theme in "${themes[@]}"; do
     for color in "${colors[@]}"; do
       for size in "${sizes[@]}"; do
-        for scheme in "${schemes[@]}"; do
-          install "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$scheme" "$window"
-          make_gtkrc "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$scheme" "$window"
-          make_assets "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$scheme" "$window"
-        done
+        install "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$window"
+        make_gtkrc "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$window"
+        make_assets "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$window"
       done
     done
   done
@@ -702,9 +621,8 @@ uninstall() {
   local theme="${3}"
   local color="${4}"
   local size="${5}"
-  local scheme="${6}"
 
-  local THEME_DIR="${1}/${2}${3}${4}${5}${6}"
+  local THEME_DIR="${1}/${2}${3}${4}${5}"
 
   if [[ "$uninstall" == 'true' ]]; then
     type='Uninstall'
@@ -722,9 +640,7 @@ uninstall_theme() {
   for theme in "${THEME_VARIANTS[@]}"; do
     for color in "${COLOR_VARIANTS[@]}"; do
       for size in "${SIZE_VARIANTS[@]}"; do
-        for scheme in "${SCHEME_VARIANTS[@]}"; do
-          uninstall "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$scheme"
-        done
+	    uninstall "${dest:-$DEST_DIR}" "${name:-$THEME_NAME}" "$theme" "$color" "$size"
       done
     done
   done
@@ -741,9 +657,7 @@ clean_theme() {
     for theme in "${themes[@]}"; do
       for color in "${colors[@]}"; do
         for size in "${sizes[@]}"; do
-          for scheme in "${schemes[@]}"; do
-            uninstall "${dest}" "${name:-$THEME_NAME}" "$theme" "$color" "$size" "$scheme"
-          done
+          uninstall "${dest}" "${name:-$THEME_NAME}" "$theme" "$color" "$size"
         done
       done
     done
